@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="it" class="locked">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2a2520">
+  <title>Grazie di cuore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Intro: envelope that opens on tap -->
+  <div class="intro" id="intro">
+    <button class="envelope" id="open" aria-label="Apri la lettera">
+      <span class="env-back"></span>
+      <span class="env-letter">
+        <img src="img/logo.png" alt="" width="1000" height="707">
+        <span class="env-hand">Grazie.</span>
+      </span>
+      <span class="env-pocket"></span>
+      <span class="env-flap"></span>
+      <span class="seal">♥</span>
+    </button>
+    <p class="intro-hint">Tocca per aprire</p>
+  </div>
+
+  <main class="sheet">
+    <header class="letterhead">
+      <img class="logo" src="img/logo.png" alt="Milano 2026" width="1000" height="707">
+      <p class="date">Milano, 2026</p>
+    </header>
+
+    <h1 class="title" data-split>Grazie.</h1>
+
+    <section class="letter">
+      <p class="salutation">Cari amici,</p>
+      <p data-words>ci sono viaggi che si ricordano per i luoghi, e altri che si ricordano per le persone. Questo appartiene alla seconda categoria. Ogni consiglio, ogni sorriso, ogni gesto di aiuto ha trasformato una semplice avventura in qualcosa di speciale.</p>
+    </section>
+
+    <article class="person">
+      <figure class="print reveal"><img style="--pos: 50% 35%" src="img/lucas-francesca.jpg" alt="Lucas e Francesca" loading="lazy" decoding="async"></figure>
+      <div class="note reveal">
+        <h2>Lucas &amp; Francesca</h2>
+        <p>Grazie per averci accolto come di famiglia, per i consigli preziosi e per ogni momento condiviso. Siete stati la nostra bussola.</p>
+        <a class="mail" href="mailto:lucas.francesca@email.com">lucas.francesca@email.com</a>
+      </div>
+    </article>
+
+    <article class="person">
+      <figure class="print reveal"><img style="--pos: 43% 38%" src="img/denise.jpg" alt="Denise" loading="lazy" decoding="async"></figure>
+      <div class="note reveal">
+        <h2>Denise</h2>
+        <p>Grazie per la tua energia, la tua pazienza e la disponibilità infinita. Hai reso tutto più semplice e molto più bello.</p>
+        <a class="mail" href="mailto:denise@email.com">denise@email.com</a>
+      </div>
+    </article>
+
+    <article class="person">
+      <figure class="print reveal"><img style="--pos: 52% 30%" src="img/mirko-nicole.jpg" alt="Mirko e Nicole" loading="lazy" decoding="async"></figure>
+      <div class="note reveal">
+        <h2>Mirko &amp; Nicole</h2>
+        <p>E infine noi, con il cuore pieno di gratitudine. Questa esperienza ci resterà dentro per sempre: grazie a tutti, davvero.</p>
+        <a class="mail" href="mailto:mirko.nicole@email.com">mirko.nicole@email.com</a>
+      </div>
+    </article>
+
+    <footer class="closing reveal">
+      <p>Con affetto,</p>
+      <p class="signature">Mirko &amp; Nicole</p>
+      <button id="love" class="love">Invia un abbraccio ♥</button>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
