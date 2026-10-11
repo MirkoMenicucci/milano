@@ -1,10 +1,10 @@
 :root {
-  --desk: #2a2520;
+  --desk: #7d9677;
   --paper: #f6efe1;
   --paper-edge: #e9dcc3;
   --ink: #2c2b45;
   --ink-soft: rgba(44, 43, 69, .72);
-  --accent: #dd8247;
+  --accent: #7f9c78;
   --seal: #a8322d;
   --env: #e6d5b5;
   --env-dark: #d4bf98;
@@ -18,7 +18,7 @@ html { -webkit-text-size-adjust: 100%; }
 html.locked { overflow: hidden; }
 a, button { -webkit-tap-highlight-color: transparent; }
 body {
-  background: var(--desk) radial-gradient(ellipse at 50% 0%, #4a3f33, var(--desk) 70%) fixed;
+  background: var(--desk) radial-gradient(ellipse at 50% 0%, #b3c5ad, var(--desk) 70%) fixed;
   color: var(--ink);
   font: 400 1.2rem/1.65 "Cormorant Garamond", Georgia, serif;
   overflow-x: hidden;
@@ -27,13 +27,13 @@ body {
 /* ---------- Intro envelope ---------- */
 .intro {
   position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; justify-items: center; gap: 2.2rem;
-  background: radial-gradient(ellipse at 50% 40%, #4a3f33, var(--desk) 70%);
-  padding: 16px;
+  background: radial-gradient(ellipse at 50% 40%, #b3c5ad, var(--desk) 70%);
+  padding: 16px; place-content: safe center; overflow-y: auto;
 }
 .envelope {
   position: relative; width: min(86vw, 520px); aspect-ratio: 3 / 2;
   border: 0; padding: 0; background: none; cursor: pointer; perspective: 1200px;
-  filter: drop-shadow(0 25px 35px rgba(0, 0, 0, .45));
+  filter: drop-shadow(0 25px 35px rgba(40, 60, 40, .35));
   animation: drop 1s var(--ease) both;
 }
 @keyframes drop { from { opacity: 0; transform: translateY(-30px) rotate(-3deg); } }
@@ -65,9 +65,48 @@ body {
 }
 @keyframes pulse { 50% { transform: scale(1.08); } }
 .intro-hint {
-  font: 500 1.5rem Caveat, cursive; color: rgba(246, 239, 225, .75);
+  font: 500 1.6rem Caveat, cursive; color: var(--ink);
   animation: drop 1s .4s var(--ease) both;
 }
+
+/* Locked until the opening date */
+.envelope.nope { animation: nope .5s; }
+@keyframes nope { 20%, 60% { transform: rotate(-3deg); } 40%, 80% { transform: rotate(3deg); } }
+.wait { text-align: center; color: var(--ink); animation: drop 1s .4s var(--ease) both; }
+.countdown { font: 700 clamp(2.2rem, 10vw, 3.2rem)/1 Caveat, cursive; font-variant-numeric: tabular-nums; }
+.wait-note { margin: .6rem 0 1rem; font-size: 1.15rem; line-height: 1.4; }
+.games { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; }
+.game-btn {
+  min-height: 48px; padding: .5rem 1.4rem; border: 0; border-radius: 999px; cursor: pointer;
+  font: 700 1.4rem Caveat, cursive; color: var(--paper); background: var(--ink);
+  box-shadow: 0 4px 10px rgba(40, 60, 40, .25); touch-action: manipulation;
+}
+.game-btn:active { transform: scale(.96); }
+
+/* Games */
+.game {
+  width: min(92vw, 440px); margin: auto; border: 0; border-radius: 8px; padding: 1.4rem 1.2rem 1.6rem; text-align: center;
+  background: var(--grain), var(--paper); color: var(--ink); box-shadow: 0 30px 80px rgba(40, 60, 40, .4);
+}
+.game::backdrop { background: rgba(45, 60, 42, .6); }
+.game h2 { font: 700 2.4rem/1 Caveat, cursive; }
+.game-status { min-height: 1.7em; margin: .4rem 0 .8rem; }
+.game-close { position: absolute; top: .3rem; right: .5rem; width: 44px; height: 44px; border: 0; background: none; font-size: 2rem; color: var(--ink-soft); cursor: pointer; }
+.board { margin-bottom: 1.2rem; }
+.board.memory { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.card {
+  aspect-ratio: 3 / 4; padding: 0; border: 0; border-radius: 6px; cursor: pointer; overflow: hidden;
+  background: var(--accent); color: #fff; font-size: 1.4rem; position: relative;
+}
+.card::after { content: "♥"; position: absolute; inset: 0; display: grid; place-items: center; }
+.card img { width: 100%; height: 100%; object-fit: cover; background: #fff; opacity: 0; transition: opacity .25s; position: relative; z-index: 1; }
+.card.up img { opacity: 1; }
+.board.hearts { position: relative; height: 300px; border-radius: 6px; background: rgba(127, 156, 120, .15); overflow: hidden; touch-action: manipulation; }
+.target {
+  position: absolute; width: 48px; height: 48px; border: 0; padding: 0; background: none; cursor: pointer;
+  font-size: 2rem; color: var(--seal); animation: popIn .25s var(--ease);
+}
+@keyframes popIn { from { transform: scale(0); } }
 
 /* Opening sequence */
 .intro.open .intro-hint { animation: gone .4s forwards; }
@@ -96,7 +135,7 @@ body {
   position: relative; width: min(100%, 820px); margin: 0 auto;
   background: var(--grain), radial-gradient(ellipse at center, var(--paper) 60%, var(--paper-edge));
   padding: max(2rem, env(safe-area-inset-top)) clamp(20px, 7vw, 80px) 5rem;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, .5);
+  box-shadow: 0 30px 80px rgba(40, 60, 40, .35);
 }
 @media (min-width: 821px) {
   .sheet { margin: 3rem auto; border-radius: 2px; }
@@ -143,7 +182,7 @@ body {
 /* Washi tape */
 .print::before {
   content: ""; position: absolute; top: -14px; left: 50%; width: 110px; height: 30px; margin-left: -55px;
-  background: rgba(221, 130, 71, .55); transform: rotate(-4deg);
+  background: rgba(178, 201, 171, .75); transform: rotate(-4deg);
   clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
 }
 .note h2 { font: 700 clamp(2.6rem, 9vw, 3.4rem)/1.05 Caveat, cursive; color: var(--ink); margin-bottom: .6rem; }
@@ -189,7 +228,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .intro { display: none; }
+  .intro:not(.wait-mode) { display: none; }
   .sheet, .title .ch, .reveal, .letter .w { opacity: 1 !important; transform: none !important; }
   .print.reveal { transform: rotate(var(--r)) !important; }
 }
