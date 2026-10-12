@@ -27,25 +27,29 @@ body {
 /* ---------- Intro envelope ---------- */
 .intro {
   position: fixed; inset: 0; z-index: 50; display: grid; place-content: center; justify-items: center; gap: 2.2rem;
+  padding: 16px; overflow: hidden;
+}
+.intro::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; transition: opacity .9s;
   background: radial-gradient(ellipse at 50% 40%, #b3c5ad, var(--desk) 70%);
-  padding: 16px; place-content: safe center; overflow-y: auto;
 }
 .envelope {
   position: relative; width: min(86vw, 520px); aspect-ratio: 3 / 2;
   border: 0; padding: 0; background: none; cursor: pointer; perspective: 1200px;
-  filter: drop-shadow(0 25px 35px rgba(40, 60, 40, .35));
   animation: drop 1s var(--ease) both;
 }
 @keyframes drop { from { opacity: 0; transform: translateY(-30px) rotate(-3deg); } }
 .envelope > span { position: absolute; display: block; }
-.env-back { inset: 0; background: var(--env-dark); border-radius: 6px; }
-.env-letter {
-  left: 6%; right: 6%; top: 6%; height: 88%; z-index: 2; border-radius: 3px;
-  background: var(--grain), var(--paper);
-  display: grid; place-content: start center; justify-items: center; padding-top: 6%;
+.env-back { inset: 0; background: var(--env-dark); border-radius: 6px; box-shadow: 0 25px 45px rgba(40, 60, 40, .35); }
+/* Folded copy of the real sheet, built in script.js: panels folded behind the first one
+   swing down one after another while the card zooms, landing pixel-exact on the page. */
+.fold {
+  position: absolute; z-index: 2; transform-origin: 0 0; will-change: transform;
+  /* lives inside the envelope <button>, which doesn't inherit text styles */
+  font: 400 1.2rem/1.65 "Cormorant Garamond", Georgia, serif; color: var(--ink); text-align: left;
 }
-.env-letter img { width: 46%; height: auto; }
-.env-hand { font: 700 clamp(2rem, 9vw, 3rem)/1 Caveat, cursive; color: var(--ink); }
+.panel { position: absolute; left: 0; overflow: hidden; transform-origin: 50% 0; backface-visibility: hidden; }
+.fold-copy { position: absolute !important; left: 0; margin: 0 !important; opacity: 1 !important; box-shadow: none !important; }
 .env-pocket {
   inset: 0; z-index: 3; background: var(--env); border-radius: 6px;
   clip-path: polygon(0 0, 50% 52%, 100% 0, 100% 100%, 0 100%);
@@ -70,11 +74,8 @@ body {
 }
 
 /* Locked until the opening date */
-.envelope.nope { animation: nope .5s; }
-@keyframes nope { 20%, 60% { transform: rotate(-3deg); } 40%, 80% { transform: rotate(3deg); } }
-.wait { text-align: center; color: var(--ink); animation: drop 1s .4s var(--ease) both; }
-.countdown { font: 700 clamp(2.2rem, 10vw, 3.2rem)/1 Caveat, cursive; font-variant-numeric: tabular-nums; }
-.wait-note { margin: .6rem 0 1rem; font-size: 1.15rem; line-height: 1.4; }
+.play { text-align: center; margin-top: 4rem; padding-top: 2.5rem; border-top: 1px solid rgba(44, 43, 69, .15); }
+.play h2 { font: 700 2.6rem/1.1 Caveat, cursive; margin-bottom: 1rem; }
 .games { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; }
 .game-btn {
   min-height: 48px; padding: .5rem 1.4rem; border: 0; border-radius: 999px; cursor: pointer;
@@ -110,11 +111,12 @@ body {
 
 /* Opening sequence */
 .intro.open .intro-hint { animation: gone .4s forwards; }
-.intro.open .seal { animation: sealOff .5s var(--ease) forwards; }
-.intro.open .env-flap { animation: flap .9s .3s var(--ease) forwards; }
-.intro.open .env-letter { animation: pull 1.1s 1.05s var(--ease) forwards; }
+.intro.open .seal { animation: sealOff .45s var(--ease) forwards; }
+.intro.open .env-flap { animation: flap .8s .2s cubic-bezier(.45, 0, .25, 1) forwards; }
 .intro.open .envelope { animation: none; }
-.intro.open { animation: gone .9s 2.4s ease forwards; }
+/* Zoom phase (driven from script.js): envelope and backdrop melt away around the letter */
+.intro.zoom::before, .intro.zoom .env-back, .intro.zoom .env-pocket, .intro.zoom .env-flap { opacity: 0; }
+.env-back, .env-pocket, .env-flap { transition: opacity .6s; }
 @keyframes gone { to { opacity: 0; visibility: hidden; } }
 @keyframes sealOff { to { transform: scale(1.4); opacity: 0; } }
 @keyframes flap {
@@ -122,12 +124,6 @@ body {
   45% { z-index: 4; }
   55% { z-index: 1; }
   100% { transform: rotateX(180deg); z-index: 1; }
-}
-@keyframes pull {
-  0% { transform: none; z-index: 2; }
-  60% { transform: translateY(-75%); z-index: 2; }
-  61% { z-index: 6; }
-  100% { transform: translateY(-20%) scale(1.25); z-index: 6; }
 }
 
 /* ---------- Paper sheet ---------- */
@@ -140,36 +136,36 @@ body {
 @media (min-width: 821px) {
   .sheet { margin: 3rem auto; border-radius: 2px; }
 }
-/* Page unfolds when the envelope disappears */
-.sheet { opacity: 0; transform: translateY(40px) scale(.97); }
-.opened .sheet { opacity: 1; transform: none; transition: opacity 1s, transform 1.2s var(--ease); }
+/* Hidden until the unfolded copy lands exactly on top of it */
+.sheet { opacity: 0; }
+.opened .sheet { opacity: 1; }
 
 .letterhead { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(44, 43, 69, .15); }
-.logo { width: min(62%, 300px); height: auto; mix-blend-mode: multiply; }
+.banner { display: block; width: 100%; height: auto; border-radius: 6px; box-shadow: 0 6px 18px rgba(44, 43, 69, .18); }
 .date { align-self: flex-end; font-style: italic; color: var(--ink-soft); }
 
 .title {
   font: 700 clamp(4.5rem, 20vw, 8.5rem)/1 Caveat, cursive; color: var(--ink);
   margin: 2.5rem 0 1rem; transform: rotate(-3deg);
 }
-.title .ch { display: inline-block; opacity: 0; }
-.opened .title .ch { animation: write .5s var(--ease) forwards; }
-@keyframes write { from { opacity: 0; transform: translateY(.2em); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 
 .letter { font-size: clamp(1.3rem, 3.6vw, 1.6rem); line-height: 1.7; margin-bottom: 4rem; }
 .salutation { font: 500 1.9rem Caveat, cursive; color: var(--accent); margin-bottom: .5rem; }
-/* Words appear like fresh ink while scrolling */
-.letter .w { opacity: .12; transition: opacity .7s; }
-.letter .w.on { opacity: 1; }
+.letter-end { margin-top: 1.2rem; font: 500 1.9rem/1.3 Caveat, cursive; color: var(--ink); }
 
-/* People: taped photo prints + handwritten notes */
-.person {
-  display: grid; gap: 1.8rem; align-items: center; margin: 4.5rem 0;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 700px) {
-  .person { grid-template-columns: 1fr 1fr; gap: 3rem; }
-  .person:nth-of-type(even) .print { order: 2; }
+/* People: taped photo prints + handwritten notes.
+   Stacked on phones, three side by side on desktop (sheet widens to fit them). */
+.people { display: grid; gap: 4.5rem; margin: 4.5rem 0; }
+.person { display: grid; gap: 1.8rem; align-content: start; text-align: center; }
+@media (min-width: 900px) {
+  .sheet { width: min(100% - 4rem, 1040px); }
+  .people { grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+  .people .person h2 { font-size: 2.2rem; white-space: nowrap; }
+  .people .mail { font-size: 1.25rem; }
+  .person:nth-child(2) .note { transition-delay: .3s; }
+  .person:nth-child(2) .print { transition-delay: .15s; }
+  .person:nth-child(3) .note { transition-delay: .45s; }
+  .person:nth-child(3) .print { transition-delay: .3s; }
 }
 .print {
   position: relative; background: #fff; padding: 12px 12px 48px;
@@ -185,8 +181,8 @@ body {
   background: rgba(178, 201, 171, .75); transform: rotate(-4deg);
   clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
 }
-.note h2 { font: 700 clamp(2.6rem, 9vw, 3.4rem)/1.05 Caveat, cursive; color: var(--ink); margin-bottom: .6rem; }
-.note p { color: var(--ink-soft); font-size: 1.25rem; }
+.person h2 { font: 700 clamp(2.6rem, 9vw, 3.4rem)/1.05 Caveat, cursive; color: var(--ink); margin-bottom: .6rem; }
+.note .cong { color: var(--ink-soft); font-size: 1.3rem; font-style: italic; }
 .mail {
   display: inline-block; margin-top: 1rem; padding: .6rem 0;
   font: 500 1.5rem Caveat, cursive; color: var(--accent); text-decoration: none;
@@ -194,15 +190,21 @@ body {
   word-break: break-all; transition: background-size .5s var(--ease);
 }
 .mail::before { content: "✉ "; }
+.tels { margin-top: .6rem; }
+.tel { display: block; padding: .3rem 0; font: 500 1.35rem Caveat, cursive; color: var(--ink); text-decoration: none; }
+.tel::before {
+  content: ""; display: inline-block; width: 1em; height: 1em; margin-right: .35em; vertical-align: -.12em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2325D366' d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 .mail:hover { background-size: 0 1.5px; }
 
 /* Scroll reveal: prints drop in like being placed on the page */
 .reveal { opacity: 0; transition: opacity .9s, transform 1.1s var(--ease); }
 .print.reveal { transform: rotate(calc(var(--r) * 3)) translateY(30px) scale(.94); }
-.note.reveal, .closing.reveal { transform: translateY(24px); }
+.note.reveal, .closing.reveal, .name.reveal { transform: translateY(24px); }
 .reveal.in { opacity: 1; }
 .print.reveal.in { transform: rotate(var(--r)); }
-.note.reveal.in, .closing.reveal.in { transform: none; }
+.note.reveal.in, .closing.reveal.in, .name.reveal.in { transform: none; }
 .note.reveal { transition-delay: .15s; }
 
 /* Closing */
@@ -228,7 +230,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .intro:not(.wait-mode) { display: none; }
-  .sheet, .title .ch, .reveal, .letter .w { opacity: 1 !important; transform: none !important; }
+  .intro { display: none; }
+  .sheet, .reveal { opacity: 1 !important; transform: none !important; }
   .print.reveal { transform: rotate(var(--r)) !important; }
 }

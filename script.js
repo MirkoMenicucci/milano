@@ -1,126 +1,67 @@
-// Hero title: handwritten letters appear one by one (after the envelope opens)
-const title = document.querySelector('[data-split]');
-title.innerHTML = [...title.textContent]
-  .map((c, i) => `<span class="ch" style="animation-delay:${300 + i * 110}ms">${c}</span>`)
-  .join('');
-
-// Intro: open envelope on tap, then reveal the sheet
+// Intro: a folded copy of the real letter slides out of the envelope and unfolds onto the page
 const intro = document.getElementById('intro');
+const envelope = document.getElementById('open');
+const sheet = document.querySelector('.sheet');
 const reveal = () => {
   intro.remove();
   document.documentElement.classList.remove('locked');
   document.body.classList.add('opened');
 };
-// Locked until Sunday 18 Oct 2026, 00:00 local time. Add ?dev=1 to the URL to bypass.
-// ponytail: client-side lock only, the letter is in the page source anyway.
-const OPEN_AT = new Date(2026, 9, 18, 0, 0);
-const isOpen = () => new URLSearchParams(location.search).get('dev') === '1' || Date.now() >= OPEN_AT;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const env = document.getElementById('open');
-const tick = () => {
-  if (isOpen()) {
-    clearInterval(timer);
-    intro.classList.remove('wait-mode');
-    document.getElementById('wait').hidden = true;
-    document.getElementById('hint').hidden = false;
-    if (reduced) reveal();
-    return;
-  }
-  const s = Math.floor((OPEN_AT - Date.now()) / 1000), p = n => String(n).padStart(2, '0');
-  document.getElementById('countdown').textContent =
-    `${Math.floor(s / 86400)}g ${p(Math.floor(s / 3600) % 24)}h ${p(Math.floor(s / 60) % 60)}m ${p(s % 60)}s`;
+
+// n panels of W x H (sheet px), each a window on the next slice of the sheet.
+// Appended in reverse so panel 0 paints on top: the others start folded behind it.
+const fold = (W, H, n) => {
+  const copy = sheet.cloneNode(true);
+  copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  copy.querySelectorAll('img').forEach(img => img.loading = 'eager');
+  copy.classList.add('fold-copy');
+  copy.style.width = `${W}px`;
+  return Array.from({ length: n }, (_, i) => {
+    const p = document.createElement('div'), slice = i ? copy.cloneNode(true) : copy;
+    p.className = 'panel';
+    p.style.cssText = `top:${i * H}px;width:${W}px;height:${H}px`;
+    slice.style.top = `${-i * H}px`;
+    p.append(slice);
+    return p;
+  });
 };
-intro.classList.add('wait-mode');
-document.getElementById('wait').hidden = false;
-const timer = setInterval(tick, 1000);
-tick();
-env.addEventListener('click', () => {
-  if (!isOpen()) {
-    env.classList.remove('nope'); void env.offsetWidth; env.classList.add('nope');
-    return;
-  }
-  if (intro.classList.contains('open')) return;
+
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) reveal();
+else envelope.addEventListener('click', () => {
+  const E = envelope.getBoundingClientRect(), S = sheet.getBoundingClientRect();
+  const W = S.width, full = innerHeight - S.top;           // the copy covers the sheet down to the screen bottom
+  const k = E.width * .88 / W;                              // scale that fits it in the envelope
+  const n = Math.max(1, Math.ceil(full * k / (E.height * .82)));
+  const H = full / n;
+  const left = E.width * .06, top = E.height * .94 - H * k;
+  const panels = fold(W, H, n);
+  const card = document.createElement('div');
+  card.className = 'fold';
+  card.inert = true;
+  card.style.cssText = `left:${left}px;top:${top}px;width:${W}px;height:${H}px`;
+  card.append(...[...panels].reverse());
+  const folded = 'perspective(2500px) rotateX(-180deg)';
+  panels.slice(1).forEach(p => p.style.transform = folded);
+  envelope.append(card);
   intro.classList.add('open');
-  intro.addEventListener('animationend', e => e.target === intro && reveal());
-});
 
-// Games to play while waiting
-const dlg = document.getElementById('game'), board = document.getElementById('board');
-const status = document.getElementById('game-status');
-const say = t => status.textContent = t;
-const games = {
-  memory() {
-    const pics = ['img/logo.png', 'img/lucas-francesca.jpg', 'img/denise.jpg', 'img/mirko-nicole.jpg'];
-    const deck = [...pics, ...pics];
-    for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-    let open = [], moves = 0, found = 0;
-    say('Trova tutte le coppie!');
-    deck.forEach(src => {
-      const c = document.createElement('button');
-      c.className = 'card';
-      c.setAttribute('aria-label', 'Carta coperta');
-      c.innerHTML = `<img src="${src}" alt="">`;
-      c.onclick = () => {
-        if (open.length === 2 || c.classList.contains('up')) return;
-        c.classList.add('up');
-        if (open.push(c) < 2) return;
-        const [a, b] = open;
-        moves++;
-        if (a.innerHTML === b.innerHTML) {
-          open = [];
-          say(++found === pics.length ? `Bravi! Tutte le coppie in ${moves} mosse ♥` : `Mosse: ${moves}`);
-        } else {
-          say(`Mosse: ${moves}`);
-          setTimeout(() => { a.classList.remove('up'); b.classList.remove('up'); open = []; }, 800);
-        }
-      };
-      board.append(c);
-    });
-  },
-  hearts() {
-    let score = 0, left = 20;
-    const show = () => say(`⏱ ${left}s · ♥ ${score}`);
-    show();
-    const spawn = setInterval(() => {
-      const h = document.createElement('button');
-      h.className = 'target';
-      h.textContent = '♥';
-      h.setAttribute('aria-label', 'Cuore');
-      h.style.cssText = `left:${Math.random() * 85}%;top:${Math.random() * 82}%`;
-      h.onpointerdown = () => { score++; show(); h.remove(); };
-      board.append(h);
-      setTimeout(() => h.remove(), 1100);
-    }, 550);
-    const clock = setInterval(() => {
-      if (--left > 0) return show();
-      end();
-      say(`Tempo scaduto! Hai preso ${score} cuori ♥`);
-    }, 1000);
-    const end = () => { clearInterval(spawn); clearInterval(clock); board.replaceChildren(); };
-    return end;
-  },
-};
-const titles = { memory: 'Memory', hearts: 'Acchiappa i cuori' };
-let current, stop = () => {};
-const start = name => {
-  stop();
-  current = name;
-  board.replaceChildren();
-  board.className = `board ${name}`;
-  document.getElementById('game-title').textContent = titles[name];
-  stop = games[name]() || (() => {});
-};
-document.querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => { start(b.dataset.game); dlg.showModal(); }));
-document.getElementById('game-again').addEventListener('click', () => start(current));
-document.getElementById('game-close').addEventListener('click', () => dlg.close());
-dlg.addEventListener('close', () => stop());
-
-// Letter: words get "inked" as they cross the middle of the screen
-const letter = document.querySelector('[data-words]');
-letter.innerHTML = letter.textContent.split(' ').map(w => `<span class="w">${w}</span>`).join(' ');
-const wordIO = new IntersectionObserver(entries => entries.forEach(e => e.target.classList.toggle('on', e.isIntersecting || e.boundingClientRect.top < 0)),
-  { rootMargin: '0px 0px -40% 0px' });
-letter.querySelectorAll('.w').forEach(w => wordIO.observe(w));
+  const ease = 'cubic-bezier(.65, 0, .35, 1)';
+  const at = (x, y, s) => `translate(${x}px, ${y}px) scale(${s})`;
+  const lift = -(top + H * k) - E.height * .05;             // until the card fully clears the pocket
+  card.animate([{ transform: at(0, 0, k) }, { transform: at(0, lift, k) }],
+    { duration: 800, delay: 650, easing: ease, fill: 'both' })
+    .finished.then(() => {
+      card.style.zIndex = 6;
+      intro.classList.add('zoom');
+      const opts = { duration: 1200, easing: ease, fill: 'forwards' };
+      // panels swing down one after another, overlapping a little so it reads as one motion
+      const step = opts.duration / ((n - 2) * .8 + 1.4);     // last panel lands with the card
+      panels.slice(1).forEach((p, i) => p.animate({ transform: [folded, 'perspective(2500px) rotateX(0deg)'] },
+        { duration: step * 1.4, delay: i * step * .8, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' }));
+      return card.animate([{ transform: at(0, lift, k) }, { transform: at(S.left - E.left - left, S.top - E.top - top, 1) }], opts).finished;
+    })
+    .then(reveal);
+}, { once: true });
 
 // Photos and notes: reveal once
 const io = new IntersectionObserver(entries => entries.forEach(e => {
